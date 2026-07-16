@@ -9,6 +9,7 @@ import SingleProduct from "./Products/SingleProduct";
 import NotFound from "./NotFound/NotFound";
 import Sales from "./Admin/Sales";
 import Sellers from "./Admin/Sellers";
+import SalesInfinitePagination from "./Admin/SalesInfinitePagination";
 
 const AllRouting = () => {
   return (
@@ -19,6 +20,7 @@ const AllRouting = () => {
       <Route path="/articles" element={<Articles />} />
       <Route path="/admin" element={<Admin />}>
         <Route path="sales" element={<Sales />} />
+        <Route path="salesInfinite" element={<SalesInfinitePagination />} />
         <Route path="sellers" element={<Sellers />} />
       </Route>
       <Route path="*" element={<NotFound />} />

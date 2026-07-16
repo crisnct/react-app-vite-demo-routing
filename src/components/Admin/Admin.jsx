@@ -15,6 +15,9 @@ const Admin = () => {
           <Link to="/admin/sales">Sales</Link>
         </li>
         <li>
+          <Link to="/admin/salesInfinite">Sales - infinite pagination</Link>
+        </li>
+        <li>
           <Link to="/admin/sellers">Sellers</Link>
         </li>
       </ul>

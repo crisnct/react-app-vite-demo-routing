@@ -1,77 +1,39 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Loader from "../Common/Loader";
+import useSellers from "../../hooks/sellers/useSellers";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "../../utils/ApiClient";
+import useAddSeller from "./../../hooks/sellers/useAddSeller";
+import useDeleteSeller from "../../hooks/sellers/useDeleteSeller";
 
 const Sellers = () => {
-  const [name, setName] = React.useState("");
-  const [sellers, setSellers] = React.useState([]);
-  const [loading, setLoading] = React.useState(false);
-  const [errors, setErrors] = React.useState();
+  const [name, setName] = useState("");
+  const { data: sellers, error, isLoading } = useSellers();
+  const queryClient = useQueryClient();
 
-  // useEffect(() => {
-  //   setLoading(true);
-  //   axios
-  //     .get("https://jsonplaceholder.typicode.com/users")
-  //     .then((res) => {
-  //       setSellers(res.data);
-  //     })
-  //     .catch((err) => {
-  //       console.error("Error fetching sellers:", err);
-  //       setErrors("Error fetching sellers: " + err.message);
-  //     })
-  //     .finally(() => {
-  //       setLoading(false);
-  //     });
-  // }, []);
-
-  const fetchSellers = async () => {
-    setLoading(true);
-    try {
-      const res = await apiClient.get("/users");
-      setSellers(res.data);
-    } catch (err) {
-      console.error("Error fetching sellers:", err);
-      setErrors("Error fetching sellers: " + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-  useEffect(() => {
-    fetchSellers();
-  }, []);
+  const deleteSellerMutation = useDeleteSeller();
+  const addSellerMutation = useAddSeller();
 
   const addSeller = async () => {
-    setErrors(null);
-    if (name.trim() === "") {
-      setErrors("Seller name cannot be empty.");
-      return;
-    }
     const newSeller = {
       id: sellers.length + 1,
       name: name,
     };
-    setSellers([newSeller, ...sellers]);
-    setName("");
-    try {
-      const response = await apiClient.post("/users", newSeller);
-      setSellers([response.data, ...sellers]);
-    } catch (err) {
-      console.error("Error adding seller:", err);
-      setErrors("Error adding seller: " + err.message);
-      setSellers(sellers);
-    }
+    addSellerMutation.mutate(newSeller);
   };
 
-  const deleteSeller = async (id) => {
-    try {
-      setSellers(sellers.filter((seller) => seller.id !== id));
-      const response = await apiClient.delete(`/users/${id}`);
-    } catch (err) {
-      console.error("Error deleting seller:", err);
-      setErrors("Error deleting seller: " + err.message);
-      setSellers(sellers);
-    }
+  const deleteSeller = (id) => {
+    deleteSellerMutation.mutate(id, {
+      onSuccess: () => {
+        queryClient.setQueryData(["sellers"], (sellers = []) =>
+          sellers.filter((seller) => seller.id !== id),
+        );
+      },
+    });
   };
+
+  const displayError =
+    error ?? addSellerMutation.error ?? deleteSellerMutation.error;
 
   return (
     <>
@@ -81,17 +43,19 @@ const Sellers = () => {
         value={name}
         onChange={(e) => setName(e.target.value)}
       />
-      <button onClick={addSeller}>Add Seller</button>
-      {loading && (
+      <button onClick={addSeller} disabled={addSellerMutation.isPending}>
+        {addSellerMutation.isPending ? "Adding seller..." : "Add Seller"}
+      </button>
+      {isLoading && (
         <div>
           <Loader />
         </div>
       )}
-      {errors && <em style={{ color: "red" }}>{errors}</em>}
+      {displayError && <em style={{ color: "red" }}>{displayError.message}</em>}
 
       <table>
         <tbody>
-          {sellers.map((seller) => (
+          {sellers?.map((seller) => (
             <tr key={seller.id}>
               <td> {seller.name}</td>
               <td>
